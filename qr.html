@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>QR Thanh Toán</title>
+  <style>
+    body { font-family: Arial; text-align: center; padding: 20px; }
+    input { padding: 10px; width: 300px; margin: 10px 0; }
+    img { margin-top: 20px; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h1>Xem mã QR thanh toán</h1>
+  <input type="text" id="nameInput" placeholder="Nhập tên của bạn" />
+  <button onclick="showQR()">Hiển thị QR</button>
+  <div id="qrResult"></div>
+
+  <script>
+    function getAmount(name) {
+      const data = localStorage.getItem("qrData");
+      if (!data) return null;
+      const totals = JSON.parse(data);
+      return totals[name] || null;
+    }
+
+    function showQR() {
+      const name = document.getElementById("nameInput").value.trim();
+      const amount = getAmount(name);
+      const qrDiv = document.getElementById("qrResult");
+      if (!amount) {
+        qrDiv.innerHTML = "<p>Không tìm thấy thông tin cho tên này.</p>";
+        return;
+      }
+
+      const account = "101602295979";
+      const bankBin = "970415";
+      const info = encodeURIComponent(`Thanh toan ${name}`);
+      const qrUrl = `https://img.vietqr.io/image/${bankBin}-${account}-compact2.png?amount=${amount}&addInfo=${info}`;
+      qrDiv.innerHTML = `<p>${name} cần thanh toán: ${amount.toLocaleString()} VND</p><img src="${qrUrl}" alt="QR Code">`;
+    }
+
+    // Nếu có ?name=... thì tự động hiển thị QR
+    window.onload = () => {
+      const params = new URLSearchParams(window.location.search);
+      const name = params.get("name");
+      if (name) {
+        document.getElementById("nameInput").value = name;
+        showQR();
+      }
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chia tiền mua hàng</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background-color: #f2f2f2; }
+    input { width: 100%; box-sizing: border-box; }
+    .qr { margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Chia tiền mua hàng</h1>
+
+  <label for="peopleInput">Danh sách người (phân cách bằng dấu phẩy):</label>
+  <input type="text" id="peopleInput" value="A,B,C" oninput="renderTable()">
+
+  <p>Nhập tên mặt hàng, giá tiền, và số lượng từng người mua:</p>
+
+  <div id="tableContainer"></div>
+
+  <button onclick="addRow()">Thêm dòng</button>
+  <button onclick="calculate()">Tính tiền</button>
+
+  <h2>Kết quả:</h2>
+  <div id="results"></div>
+
+  <script>
+    let people = ["A", "B", "C"];
+
+    function getPeople() {
+      return document.getElementById("peopleInput").value.split(",").map(p => p.trim()).filter(p => p);
+    }
+
+    function renderTable() {
+      people = getPeople();
+      const container = document.getElementById("tableContainer");
+      const table = document.createElement("table");
+      table.id = "itemsTable";
+
+      const thead = document.createElement("thead");
+      const headRow = document.createElement("tr");
+      headRow.innerHTML = `<th>Mặt hàng</th><th>Giá</th>` + people.map(p => `<th>${p}</th>`).join('') + `<th>Xoá</th>`;
+      thead.appendChild(headRow);
+
+      const tbody = document.createElement("tbody");
+      tbody.id = "itemsBody";
+
+      container.innerHTML = "";
+      table.appendChild(thead);
+      table.appendChild(tbody);
+      container.appendChild(table);
+    }
+
+    function addRow() {
+      const tbody = document.getElementById("itemsBody");
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td><input type="text" placeholder="Tên hàng"></td>
+        <td><input type="number" placeholder="Giá"></td>
+        ${people.map(() => '<td><input type="number" min="0" value="0"></td>').join('')}
+        <td><button onclick="this.closest('tr').remove()">Xoá</button></td>
+      `;
+      tbody.appendChild(row);
+    }
+
+    function calculate() {
+      people = getPeople();
+      const table = document.getElementById("itemsBody");
+      const rows = table.querySelectorAll("tr");
+      const totals = {};
+      people.forEach(p => totals[p] = 0);
+
+      rows.forEach(row => {
+        const inputs = row.querySelectorAll("input");
+        const name = inputs[0].value;
+        const price = parseFloat(inputs[1].value);
+        if (!name || isNaN(price)) return;
+
+        people.forEach((person, i) => {
+          const qty = parseInt(inputs[i + 2].value) || 0;
+          totals[person] += qty * price;
+        });
+      });
+
+      const resultDiv = document.getElementById("results");
+      resultDiv.innerHTML = '';
+
+      people.forEach(person => {
+        const amount = totals[person];
+        if (amount > 0) {
+          const div = document.createElement('div');
+          div.innerHTML = `<strong>${person}:</strong> ${amount.toLocaleString()} VND <button onclick="generateQR('${person}', ${amount})">Tạo QR</button><div class='qr' id='qr-${person}'></div>`;
+          resultDiv.appendChild(div);
+        }
+      });
+    }
+
+    function generateQR(name, amount) {
+      const account = '101602295979';
+      const bankBin = '970415'; // BIN của Vietinbank
+      const info = encodeURIComponent(`Thanh toan ${name}`);
+      const url = `https://img.vietqr.io/image/${bankBin}-${account}-compact2.png?amount=${amount}&addInfo=${info}`;
+
+      const qrDiv = document.getElementById(`qr-${name}`);
+      qrDiv.innerHTML = `<img src='${url}' alt='QR cho ${name}' />`;
+    }
+
+    // Tạo bảng lần đầu tiên
+    renderTable();
+    addRow();
+  </script>
+</body>
+</html>
