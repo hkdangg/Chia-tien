@@ -1,51 +1,57 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <title>QR Thanh Toán</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mã QR thanh toán</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <style>
-    body { font-family: Arial; text-align: center; padding: 20px; }
-    input { padding: 10px; width: 300px; margin: 10px 0; }
-    img { margin-top: 20px; border: 1px solid #ccc; }
+    body { font-family: Arial, sans-serif; padding: 20px; text-align: center; }
+    input { padding: 10px; margin: 10px 0; width: 200px; }
+    #qrcode { margin-top: 20px; }
   </style>
 </head>
 <body>
-  <h1>Xem mã QR thanh toán</h1>
-  <input type="text" id="nameInput" placeholder="Nhập tên của bạn" />
-  <button onclick="showQR()">Hiển thị QR</button>
-  <div id="qrResult"></div>
+  <h1>Mã QR thanh toán</h1>
+  <p>Nhập tên của bạn nếu truy cập từ link trực tiếp:</p>
+  <input type="text" id="nameInput" placeholder="Tên của bạn">
+  <button onclick="generateQR()">Tạo mã QR</button>
+
+  <div id="qrcode"></div>
 
   <script>
-    function getAmount(name) {
-      const data = localStorage.getItem("qrData");
-      if (!data) return null;
-      const totals = JSON.parse(data);
-      return totals[name] || null;
+    function getQueryParams() {
+      const params = new URLSearchParams(window.location.search);
+      return {
+        name: params.get("name"),
+        amount: params.get("amount")
+      };
     }
 
-    function showQR() {
+    function generateQR() {
       const name = document.getElementById("nameInput").value.trim();
-      const amount = getAmount(name);
-      const qrDiv = document.getElementById("qrResult");
-      if (!amount) {
-        qrDiv.innerHTML = "<p>Không tìm thấy thông tin cho tên này.</p>";
+      const params = getQueryParams();
+      const finalName = name || params.name;
+      const amount = parseInt(params.amount);
+
+      if (!finalName || isNaN(amount)) {
+        alert("Thiếu tên hoặc số tiền.");
         return;
       }
 
-      const account = "101602295979";
-      const bankBin = "970415";
-      const info = encodeURIComponent(`Thanh toan ${name}`);
-      const qrUrl = `https://img.vietqr.io/image/${bankBin}-${account}-compact2.png?amount=${amount}&addInfo=${info}`;
-      qrDiv.innerHTML = `<p>${name} cần thanh toán: ${amount.toLocaleString()} VND</p><img src="${qrUrl}" alt="QR Code">`;
+      const accountNumber = "101602295979"; // Vietinbank
+      const qrData = `https://img.vietqr.io/image/970415-${accountNumber}-compact2.png?amount=${amount}&addInfo=Thanh+toan+cho+${encodeURIComponent(finalName)}`;
+
+      const qrDiv = document.getElementById("qrcode");
+      qrDiv.innerHTML = `<p><strong>${finalName}</strong> cần thanh toán <strong>${amount.toLocaleString()} VND</strong></p><img src="${qrData}" alt="QR Code">`;
     }
 
-    // Nếu có ?name=... thì tự động hiển thị QR
+    // Tự động tạo mã QR nếu có đủ dữ liệu trong URL
     window.onload = () => {
-      const params = new URLSearchParams(window.location.search);
-      const name = params.get("name");
-      if (name) {
+      const { name, amount } = getQueryParams();
+      if (name && amount) {
         document.getElementById("nameInput").value = name;
-        showQR();
+        generateQR();
       }
     };
   </script>
