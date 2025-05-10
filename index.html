@@ -88,6 +88,8 @@
         });
       });
 
+      localStorage.setItem("chiaTienData", JSON.stringify(totals));
+
       const resultDiv = document.getElementById("results");
       resultDiv.innerHTML = '';
 
@@ -95,8 +97,7 @@
         const amount = totals[person];
         if (amount > 0) {
           const div = document.createElement('div');
-          const url = `qr.html?name=${encodeURIComponent(person)}&amount=${amount}`;
-          div.innerHTML = `<strong>${person}:</strong> ${amount.toLocaleString()} VND <a href='${url}' target='_blank'>Xem mã QR</a>`;
+          div.innerHTML = `<strong>${person}:</strong> ${amount.toLocaleString()} VND`;
           resultDiv.appendChild(div);
         }
       });
